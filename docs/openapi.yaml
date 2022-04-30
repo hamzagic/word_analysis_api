@@ -1,0 +1,467 @@
+openapi: 3.0.0
+info:
+  title: Word Bank
+  version: 1.0.0
+servers:
+  - url: "http://localhost:5432/api"
+paths:
+  /login:
+    post:
+      summary: Will log in an existent user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                  Email:
+                    $ref: "#/components/schemas/Email"
+                  Password:
+                    $ref: "#/components/schemas/Password"
+              required:
+                - Email
+                - Password
+      responses:
+        "200":
+          description: Success.
+        "422":
+          description: Invalid input.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Email:
+                    $ref: "#/components/schemas/InvalidEmail"
+                  Password:
+                    $ref: "#/components/schemas/InvalidPassword"
+        "500":
+          description: Error. Check server logs.
+  /signup:
+    post:
+      summary: Will create a new parent account with a child.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                FirstName:
+                  $ref: "#/components/schemas/FirstName"
+                LastName:
+                  $ref: "#/components/schemas/LastName"
+                Email:
+                  $ref: "#/components/schemas/Email"
+                Password:
+                  $ref: "#/components/schemas/Password"
+                ChildName:
+                  $ref: "#/components/schemas/Name"
+                ChildAgeRange:
+                  $ref: "#/components/schemas/AgeRange"
+                ChildGender:
+                  $ref: "#/components/schemas/GenderId"
+              required:
+                - FirstName
+                - LastName
+                - Email
+                - Password
+                - ChildName
+                - ChildAgeRange
+                
+      responses:
+        "201":
+          description: Success.
+        "400":
+          description: Invalid input data.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Email:
+                    $ref: "#/components/schemas/InvalidEmail"
+                  FirstName:
+                    $ref: "#/components/schemas/InvalidFirstName"
+                  LastName:
+                    $ref: "#/components/schemas/InvalidLastName"
+                  Password:
+                    $ref: "#/components/schemas/InvalidPassword"
+                  ChildName:
+                    $ref: "#/components/schemas/InvalidName"
+                  ChildAgeRange:
+                    $ref: "#/components/schemas/InvalidAgeRange"
+                  ChildGender:
+                    $ref: "#/components/schemas/InvalidGenderId"
+                    
+  /child:
+    post:
+      summary: Will add an additional child to the parent's account.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                Name:
+                  $ref: "#/components/schemas/Name"
+                AgeRange:
+                  $ref: "#/components/schemas/AgeRange"
+                GenderId:
+                  $ref: "#/components/schemas/GenderId"
+                ParentId:
+                  $ref: "#/components/schemas/ParentId"
+              required:
+                - Name
+                - AgeRange
+                - ParentId
+      responses:
+        "201":
+          description: Success.
+        "400":
+          description: Invalid input data.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Name:
+                    $ref: "#/components/schemas/InvalidName"
+                  AgeRange:
+                    $ref: "#/components/schemas/InvalidAgeRange"
+                  GenderId:
+                    $ref: "#/components/schemas/InvalidGenderId"
+                  ParentId:
+                    $ref: "#/components/schemas/InvalidParentId"
+                    
+  /word:
+    post:
+      summary: Creates a new word in the word dictionary
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                Title:
+                  $ref: "#/components/schemas/Title"
+                Description:
+                  $ref: "#/components/schemas/Description"
+                ImageUrl:
+                  $ref: "#/components/schemas/ImageUrl"
+                CategoryId:
+                  $ref: "#/components/schemas/CategoryId"
+              required:
+                - Title
+                - Description
+                - ImageUrl
+                - CategoryId
+      responses:
+        "201":
+          description: Success.
+        "400":
+          description: Invalid input data.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Title:
+                    $ref: "#/components/schemas/InvalidTitle"
+                  Description:
+                    $ref: "#/components/schemas/InvalidDescription"
+                  ImageUrl:
+                    $ref: "#/components/schemas/InvalidImageUrl"
+                  CategoryId:
+                    $ref: "#/components/schemas/InvalidCategoryId"
+        "401":
+          description: Unauthorized.
+        "500":
+          description: Internal Server Error.
+    get:
+      summary: Retrieves all active words.
+      responses:
+        "200":
+          description: Success.
+  
+  /transcribe/upload:
+    post:
+      summary: Uploads an audio file to be transcribed
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                AudioFile:
+                  description: A wav or mp3 audio file.
+                  type: string
+                  format: binary
+              required:
+                - AudioFile
+            encoding:
+              AudioFile:
+                contentType: "audio/mpeg, audio/wav, audio/wave"
+      responses:
+        "200":
+          description: Success.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  payload:
+                    type: object
+                    properties:
+                      TranscriptionJob:
+                        $ref: "#/components/schemas/TranscriptionJob"
+        "400":
+          description: Invalid input data.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  AudioFile:
+                    type: array
+                    items:
+                      type: string
+                      example: "An image url must be provided."
+                      enum: ["An image url must be provided."]
+        "401":
+          description: Unauthorized.
+        "500":
+          description: Internal Server Error.
+          
+  /transcribe/status:
+    post:
+      summary: Retrieves the transcription data if the status is completed.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                JobName:
+                  description: The name given to the job when uploading the audio file.
+              required:
+                - JobName
+      responses:
+        "200":
+          description: Success.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  payload:
+                    type: object
+                    properties:
+                      TranscriptionJobData:
+                        $ref: "#/components/schemas/TranscriptionJobData"
+        "401":
+          description: Unauthorized.
+        "500":
+          description: Internal Server Error.
+components:
+#   securitySchemes:
+#     bearerAuth:
+#       type: http
+#       scheme: bearer
+      
+  schemas:
+    Email:
+      type: string
+      format: email
+      maxLength: 255
+      example: jdoe@email.com
+      
+    FirstName:
+      type: string
+      minLength: 3
+      maxLength: 255
+      example: John
+    
+    InvalidFirstName:
+      type: array
+      items:
+        type: string
+        example: "The first name is required."
+        enum: ["The first name is required.", "The first name field must be a string between 2 and 255 characters."]
+    
+    InvalidLastName:
+      type: array
+      items:
+        type: string
+        example: "The last name field is required."
+        enum: ["The last name is required.", "The last name field must be a string between 2 and 255 characters."]
+      
+    LastName:
+      type: string
+      minLength: 3
+      maxLength: 255
+      example: Doe
+      
+    InvalidEmail:
+      type: array
+      items:
+        type: string
+        example: "The email field is required."
+        enum: ["The email field is required.", "The entered value is not a valid email address."]
+        
+    Password:
+      type: string
+      format: password
+      minLength: 6
+      maxLength: 255
+      example: P@ssword!
+      
+    InvalidPassword:
+      type: array
+      items:
+        type: string
+        example: "A password is required."
+        enum: ["A password is required.", "Password must have at least 6 characters."]
+      
+    Name:
+      type: string
+      minLength: 3
+      maxLength: 255
+      example: Johnny
+      
+    InvalidName:
+      type: array
+      items:
+        type: string
+        enum: ["A name is required.", "Name must be a string between 2 and 255 characters."]
+      
+    AgeRange:
+      type: array
+      items:
+        type: string
+        example: "1-2"
+        enum: ["1-2", "3-4", "5-6", "7-8"]
+        
+    InvalidAgeRange:
+      type: array
+      items:
+        type: string
+        example: "A value must be selected."
+        enum: ["A value must be selected."]
+        
+    GenderId:
+      type: number
+      example: 1
+      
+    InvalidGenderId:
+      type: array
+      items:
+        type: string
+        example: "Invalid id."
+        enum: ["Invalid id.", "A gender id must be provided."]
+      
+    ParentId:
+      type: number
+      example: 1
+      
+    InvalidParentId:
+      type: array
+      items:
+        type: string
+        example: "Invalid id."
+        enum: ["Invalid id.", "A parent id must be provided."]
+        
+    Title:
+      type: string
+      minLength: 2
+      maxLength: 255
+      example: Dog
+      
+    InvalidTitle:
+      type: array
+      items:
+        type: string
+        example: "A title is required."
+        enum: ["A title is required.", "Title must be a string between 2 and 255 characters."]
+        
+    Description:
+      type: string
+      minLength: 3
+      maxLength: 500
+      example: Dog
+      
+    InvalidDescription:
+      type: array
+      items:
+        type: string
+        example: "A description is required."
+        enum: ["A description is required.", "A description must have at least 3 characters."]
+      
+    ImageUrl:
+      type: string
+      
+    InvalidImageUrl:
+      type: array
+      items:
+        type: string
+        example: "An image url must be provided."
+        enum: ["An image url must be provided."]
+      
+    CategoryId:
+      type: number
+      example: 1
+      
+    InvalidCategoryId:
+      type: array
+      items:
+        type: string
+        example: "A category must be selected."
+        enum: ["A category must be selected."]
+        
+    TranscriptionJob:
+      type: object
+      description: The data sent by AWS Transcribe after a successful job request.
+      properties:
+        TranscriptionJobName:
+          description: The name of the transcribe job.
+        TranscriptionJobStatus:
+          description: The current status of the job.
+        LanguageCode:
+          description: The language that will be recognized by the STT tool.
+        Media:
+          description: It is an object that contains the uri of the audio file.
+        Settings:
+          description: The settings defined in the transcription/upload endpoint.
+          
+    TranscriptionJobData:
+      type: object
+      description: It will check the job status and return the contents of the saved JSON file if the status is completed.
+      properties:
+        jobName:
+          description: The name of the transcribe job.
+        accountId:
+          description: The id from the AWS user allowed to request the transcribe job.
+        results:
+          description: An object which will return, among other data, the transcription under the transcripts key.
+        
+    
+        
+      
+        
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+                
